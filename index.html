@@ -133,6 +133,8 @@
                         
                             <li><a href="/archives/">所有文章</a></li>
                         
+                            <li><a href="/tags/随笔">随笔</a></li>
+                        
                             <li><a href="/tags/">标签云</a></li>
                         
                             <li><a href="/about/">关于我</a></li>
@@ -210,6 +212,8 @@
                 
                     <li><a href="/archives/">所有文章</a></li>
                 
+                    <li><a href="/tags/随笔">随笔</a></li>
+                
                     <li><a href="/tags/">标签云</a></li>
                 
                     <li><a href="/about/">关于我</a></li>
@@ -262,7 +266,173 @@
     <div class="article-entry" itemprop="articleBody">
       
           
-        <p>大风呼呼的一天</p>
+        <p>#codeception概述<br>Codeception 是一个全堆栈的 PHP 测试框架。</p>
+<p><em>可以做以下测试：</em></p>
+<ul>
+<li>Acceptance Testing（验收测试）</li>
+<li>Functional Testing（功能测试）</li>
+<li>API Testing（API 测试）</li>
+<li>Unit Testing（单元测试）</li>
+</ul>
+<p>##官方介绍：</p>
+<blockquote>
+<p>Codeception is a new full-stack testing PHP framework. Inspired by BDD, it provides you absolutely new original way for writing acceptance, functional and even unit tests。</p>
+</blockquote>
+<p>##官网地址:<br><a href="http://codeception.com/" target="_blank" rel="external">http://codeception.com/</a> (需翻墙)</p>
+<p>本地文档(182.254.140.92):/zhongan/tools/codeception/codeception/docs/</p>
+<p>#使用步骤</p>
+<p>##安装</p>
+<ol>
+<li><p>腾讯云开发机(182.254.140.92) /zhongan/tools/ 目录下获取codecept。</p>
+</li>
+<li><p>将codecept放到自己home根目录下</p>
+ <figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">cp /zhongan/tools/codecept ~/</span><br></pre></td></tr></table></figure>
+</li>
+</ol>
+<p>##初始化测试结构</p>
+<ol>
+<li><p>进入到要测试的项目代码目录:  cd 项目名/yii-advanced-app-2.0.6/</p>
+</li>
+<li><p>/usr/local/php/bin/php ~/codecept bootstrap。初始化目录结构后。会发现多出了test目录和codeception.yml文件。</p>
+</li>
+</ol>
+<p>##test目录结构介绍<br>待补充…</p>
+<p>##创建接口测试</p>
+<ol>
+<li><p>creating a new test suite (suite不知道怎么解释合适)</p>
+ <figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">/usr/<span class="built_in">local</span>/php/bin/php ~/codecept g:suite api</span><br></pre></td></tr></table></figure>
+</li>
+</ol>
+<blockquote>
+<p>这就在test/ 目录下创建了一个名为 api 的suite </p>
+<ol>
+<li>创建测试文件User</li>
+</ol>
+</blockquote>
+<pre><code><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">/usr/local/php/bin/php ~/codecept g:cept api User</span><br></pre></td></tr></table></figure>
+
+&gt;执行命令后，生成了一个tests/api/UserCept.php文件
+</code></pre><ol>
+<li><p>修改tests/api.suite.yml文件，添加rest module支持，修改成如下：</p>
+<pre><code>class_name: ApiTester
+    modules:
+        enabled:
+            - \Helper\Api
+            - REST:            
+                url: 填写需要测试的项目根url
+                depends: PhpBrowser
+                part: Json  
+</code></pre></li>
+<li><p>在tests/api/UserCept.php中编写测试代码, 示例如下:</p>
+<pre><code>&lt;?php
+$I = new ApiTester($scenario);
+$I-&gt;wantTo(&apos;create a user via API&apos;);
+$I-&gt;amHttpAuthenticated(&apos;service_user&apos;, &apos;123456&apos;);
+$I-&gt;haveHttpHeader(&apos;Content-Type&apos;, &apos;application/x-www-form-urlencoded&apos;);
+$I-&gt;sendPOST(&apos;/users&apos;, [&apos;name&apos; =&gt; &apos;davert&apos;, &apos;email&apos; =&gt; &apos;davert@codeception.com&apos;]);
+$I-&gt;seeResponseCodeIs(200);
+$I-&gt;seeResponseIsJson();
+$I-&gt;seeResponseContains(&apos;{&quot;result&quot;:&quot;ok&quot;}&apos;);
+?&gt;
+</code></pre></li>
+<li><p>运行测试</p>
+ <figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">/usr/<span class="built_in">local</span>/php/bin/php ~/codecept run api</span><br></pre></td></tr></table></figure>
+</li>
+</ol>
+<p>##创建单元测试</p>
+<ol>
+<li><p>创建unit测试文件。默认的在 tests/ 下面已经有了一个unit suite，所以我们只需要直接创建unit测试文件即可。</p>
+ <figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">/usr/local/php/bin/php ~/codecept g:test unit Example</span><br></pre></td></tr></table></figure>
+</li>
+<li><p>配置项目初始化的文件。因为unit测试是要对项目里的方法、类的一些测试，所以需要在tests/unit/_bootstrap.php中将项目的初始化文件包含进来，比较简单的做法就是直接将项目web/index.php 中的内容copy过来(要注意一些路径可能需要修改)。Basic_Qq的示例:</p>
+</li>
+</ol>
+<pre><code>&lt;?php
+define(&apos;END_TYPE&apos;, &apos;frontend&apos;);
+define(&apos;PROJECT_NAME&apos;, &apos;Basic_Qq&apos;);
+
+define(&apos;CODE_PATH&apos;, realpath(__DIR__.&apos;/../../../..&apos;).&apos;/&apos;); #/zhongan/Base_code/Code/
+define(&apos;PROJECT_PATH&apos;, realpath(__DIR__.&apos;/../..&apos;).&apos;/&apos;); #/zhongan/Base_code/Code/Basic_Qq/yii-advanced-app-2.0.6/
+define(&apos;PROJECT_END_PATH&apos;, PROJECT_PATH.END_TYPE.&apos;/&apos;);  #/zhongan/Base_code/Code/Basic_Qq/yii-advanced-app-2.0.6/frontend
+define(&apos;ZHONGAN_PATH&apos;, CODE_PATH.&apos;ZHONGAN&apos;.&apos;/&apos;);
+
+define(&apos;FRAMEWORK_PATH&apos;, CODE_PATH.&apos;Framework/yii-vendor-2.0.6&apos;);
+
+defined(&apos;CONFIG_FILE_PATH&apos;) or define(&apos;CONFIG_FILE_PATH&apos;, &apos;/zhongan/config&apos;);
+$envConfig = require(CONFIG_FILE_PATH . &apos;/env.php&apos;);
+
+defined(&apos;YII_ENV&apos;) or define(&apos;YII_ENV&apos;, $envConfig);
+defined(&apos;YII_DEBUG&apos;) or define(&apos;YII_DEBUG&apos;, YII_ENV != &apos;prod&apos;);      //true false 只在dev环境下需要debug
+
+require(FRAMEWORK_PATH . &apos;/autoload.php&apos;);
+require(FRAMEWORK_PATH . &apos;/yiisoft/yii2/Yii.php&apos;);
+
+require(PROJECT_PATH . &apos;common/config/bootstrap.php&apos;);  //基本的环境变量的配置都在这里
+require(PROJECT_END_PATH.&apos;config/bootstrap.php&apos;);
+
+define(&apos;RUNTIME_MODE&apos;, \ZHONGAN\yii\help\RunTimeMode::easyGetRunTimeMode());
+
+$config = \yii\helpers\ArrayHelper::merge(require(ZHONGAN_PATH.&apos;yii/config/main.php&apos;) ,require(PROJECT_END_PATH . &apos;config/main.php&apos;), require_once (PROJECT_END_PATH . &apos;config/main-&apos;.YII_ENV.&apos;.php&apos;));
+$application = new yii\web\Application($config);
+</code></pre><ol>
+<li><p>在Example.php文件中编写测试代码</p>
+<pre><code>&lt;?php
+
+class ExampleTest extends \Codeception\TestCase\Test
+{
+    /**
+     * @var \UnitTester
+     */
+    protected $tester;
+
+    protected function _before()
+    {
+    }
+
+    protected function _after()
+    {
+    }
+
+    //测试BanfeiClass::findOne是否正常
+    public function testMe()
+    {
+       $classId = 784; 
+       $class = \banfei\mdl\BanfeiClass::findOne($classId);
+       $this-&gt;assertEquals(&apos;cc222&apos;,$class-&gt;name);
+    }
+
+    //对获取汉字的拼音首字母方法测试
+    public function testGetFirstChar()
+    {
+       $obj = new \ZHONGAN\help\string\HzToPy();
+       $a = &quot;众&quot;;
+       $py = $obj-&gt;getfirstchar($a);
+       //断言&apos;众&apos;的首字母应该是z
+       $this-&gt;assertEquals(&apos;Z&apos;,$py);
+       $b = &quot;安&quot;;
+       //断言&apos;安&apos;的首字母不是b
+       $py = $obj-&gt;getfirstchar($b);
+       $this-&gt;assertNotEquals(&apos;B&apos;,$py);
+    }
+}
+</code></pre></li>
+</ol>
+<ol>
+<li><p>运行测试</p>
+<blockquote>
+<p>php ~/codecept run unit</p>
+</blockquote>
+<p> 结果:</p>
+<pre><code>Codeception PHP Testing Framework v2.1.3
+Powered by PHPUnit 4.8.21 by Sebastian Bergmann and contributors.
+
+Unit Tests (3) ----------------------------------------------------------------------------------------------------------------------------
+Test me (ExampleTest::testMe)                                                                                                        Fail
+Test get first char (ExampleTest::testGetFirstChar)                                                                                  Ok
+-------------------------------------------------------------------------------------------------------------------------------------------
+</code></pre></li>
+</ol>
+<p>#总结<br>以上就是Codeception大致的使用方法，可能写的不太清晰，有问题多看官方文档:<a href="http://codeception.com/，" target="_blank" rel="external">http://codeception.com/，</a> 不清楚的也可以直接找我交流。</p>
 
       
     </div>
